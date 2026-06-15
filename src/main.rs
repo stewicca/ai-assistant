@@ -41,21 +41,16 @@ async fn main() -> anyhow::Result<()> {
 
     let client = CompletionsClient::from_env()?;
 
-    let agent = Arc::new(
-        client
-            .agent("nvidia/nemotron-3-super-120b-a12b:free")
-            .preamble(PREAMBLE)
-            .build(),
-    );
-    let fallback_agent = Arc::new(
-        client
-            .agent("nvidia/nemotron-3-super-120b-a12b:free")
-            .preamble(PREAMBLE)
-            .build(),
-    );
+    let chat_model = std::env::var("CHAT_MODEL")
+        .map_err(|_| anyhow::anyhow!("Environment variable CHAT_MODEL tidak di-set.\nContoh: export CHAT_MODEL=\"deepseek-v4-pro\""))?;
+    let fallback_model = std::env::var("FALLBACK_MODEL")
+        .map_err(|_| anyhow::anyhow!("Environment variable FALLBACK_MODEL tidak di-set.\nContoh: export FALLBACK_MODEL=\"MiniMax-M3\""))?;
+
+    let agent = Arc::new(client.agent(&chat_model).preamble(PREAMBLE).build());
+    let fallback_agent = Arc::new(client.agent(&fallback_model).preamble(PREAMBLE).build());
     let extractor = Arc::new(
         client
-            .extractor::<ExtractedFacts>("nvidia/nemotron-3-super-120b-a12b:free")
+            .extractor::<ExtractedFacts>(&chat_model)
             .preamble(
                 "Ekstrak fakta penting tentang user dari percakapan: preferensi, \
                 info pribadi, tujuan, dan rencana. Hanya fakta yang berguna untuk \

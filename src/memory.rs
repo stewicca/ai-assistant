@@ -14,7 +14,9 @@ pub struct MemoryStore {
 
 impl MemoryStore {
     pub async fn load(client: &CompletionsClient) -> anyhow::Result<Self> {
-        let model = client.embedding_model("nvidia/llama-nemotron-embed-vl-1b-v2:free");
+        let embed_model = std::env::var("EMBED_MODEL")
+            .map_err(|_| anyhow::anyhow!("Environment variable EMBED_MODEL tidak di-set.\nContoh: export EMBED_MODEL=\"text-embedding-3-small\""))?;
+        let model = client.embedding_model(&embed_model);
         let entries = Self::load_from_file()?;
 
         let mut store = Self {
